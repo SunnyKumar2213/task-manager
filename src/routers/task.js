@@ -6,7 +6,25 @@ const auth=require('../middleware/auth');
 router.get('/getTasks',auth,async(req,res)=>{ 
     try{
         //const task=await Task.find({owner:req.user._id});
-        await req.user.populate('tasks').execPopulate();
+        const match={}; 
+        const sort={};
+        if(req.query.completed){
+            match.complete=req.query.completed ==='true';
+        }
+        if(req.query.sortBy){
+            var part=req.query.sortBy.split(':');
+            sort[part[0]]=part[1]==='desc'? -1 : 1
+
+        }
+        await req.user.populate({
+            path:'tasks',
+            match,
+            options:{
+                limit :parseInt(req.query.limit),
+                skip:parseInt(req.query.skip),
+                sort
+            }
+        }).execPopulate();
         return res.status(200).send(req.user.tasks);
     }catch(e){
         return res.status(400).send(e);
